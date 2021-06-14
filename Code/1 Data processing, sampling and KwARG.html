@@ -14259,532 +14259,18 @@ a.anchor-link {
 
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h1 id="Data-processing,-sampling-and-KwARG">Data processing, sampling and KwARG<a class="anchor-link" href="#Data-processing,-sampling-and-KwARG">&#182;</a></h1><p>This notebook provides commands used in processing the data, obtaining the samples and running KwARG. The commands can be run on most Unix-based systems via command line (to re-run a particular command, delete the '!' prefixing each line below).</p>
+<h1 id="Data-processing,-sampling-and-KwARG">Data processing, sampling and KwARG<a class="anchor-link" href="#Data-processing,-sampling-and-KwARG">&#182;</a></h1><p>This notebook provides commands used in processing the data, obtaining the samples and running KwARG, illustrated on the South Africa (November) dataset. The commands can be run on most Unix-based systems via command line (to re-run a particular command, delete the '!' prefixing each line below).</p>
 <p>External tools used:</p>
 <p><a href="https://mafft.cbrc.jp/alignment/software/">MAFFT</a></p>
 <p><a href="https://bioinf.shenwei.me/seqkit/">SeqKit</a></p>
+<p>The quality control criteria as detailed in Section S1.2 were applied by running the sequences through the Nextclade tool available <a href="https://clades.nextstrain.org/">here</a>.</p>
+<p>The list of problematic sites to mask by De Maio et al (2020) is downloaded as <code>problematic_sites_sarsCov2.vcf</code> from <a href="https://github.com/W-L/ProblematicSites_SARS-CoV2">here</a> (using version from 4 March 2021).</p>
 
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h1 id="Data-processing-:-England">Data processing : England<a class="anchor-link" href="#Data-processing-:-England">&#182;</a></h1>
-</div>
-</div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Source">Source<a class="anchor-link" href="#Source">&#182;</a></h3><p>The data was downloaded from <a href="https://www.gisaid.org/">GISAID</a> on 20 December 2020, filtering for sequences:</p>
-<ul>
-<li>collected in November 2020 in England;</li>
-<li>marked as complete (&gt;29,900 nucleotides) and excluding low coverage sequences (&gt;5% ambiguous nucleotides);</li>
-<li>labelled as clade GR;</li>
-</ul>
-<p>giving 4,517 sequences in total. The downloaded files are named:</p>
-<ul>
-<li><code>Eng_data.fasta</code> (the sequences in fasta format)</li>
-<li><code>Eng_sequencing_info.tsv</code> (sequencing metadata)</li>
-</ul>
-<p>The data is not shared here as per GISAID's terms of use, but the GISAID accession IDs are provided in the file Eng_id.txt, which can be used to recreate the dataset used in our analysis:</p>
-
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[1]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>grep <span class="s2">&quot;&gt;&quot;</span> Eng_data.fasta <span class="p">|</span> awk -F<span class="s2">&quot;|&quot;</span> <span class="s1">&#39;{ print $2 }&#39;</span> &gt; Eng_id.txt<span class="p">;</span>
-<span class="o">!</span>head Eng_id.txt
-</pre></div>
-
-     </div>
-</div>
-</div>
-</div>
-
-<div class="jp-Cell-outputWrapper">
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-
-<div class="jp-OutputArea-child">
-
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>EPI_ISL_637284
-EPI_ISL_642611
-EPI_ISL_642613
-EPI_ISL_642618
-EPI_ISL_642621
-EPI_ISL_642624
-EPI_ISL_642627
-EPI_ISL_642629
-EPI_ISL_642630
-EPI_ISL_642631
-</pre>
-</div>
-</div>
-
-</div>
-
-</div>
-
-</div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Alignment">Alignment<a class="anchor-link" href="#Alignment">&#182;</a></h3><p>The sequences in each dataset were aligned using MAFFT to the reference sequence in <code>ref_seq.fasta</code> (GISAID accession EPI_ISL_402125, GenBank ID MN908947.3):</p>
-<div class="highlight"><pre><span></span>mafft --auto --thread -1 --keeplength --quiet --mapout --preservecase --addfragments Eng_data.fasta ref_seq.fasta &gt; Eng_alignment.fasta
-</pre></div>
-<p>All symbols other than 'A, C, T, G' are replaced with 'N':</p>
-
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>sed <span class="s1">&#39;/^&gt;/! s/[^actgACTG]/N/g&#39;</span> Eng_alignment.fasta &gt; Eng_alignment_cleaned.fasta
-</pre></div>
-
-     </div>
-</div>
-</div>
-</div>
-
-</div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Splitting-by-strain">Splitting by strain<a class="anchor-link" href="#Splitting-by-strain">&#182;</a></h3><p>The IDs corresponding to lineage B.1.1.7 are extracted from the sequencing metadata:</p>
-
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>grep <span class="s2">&quot;B.1.1.7	&quot;</span> Eng_sequencing_info.tsv &gt; Eng_newstrain.txt<span class="p">;</span>
-<span class="o">!</span>awk <span class="s1">&#39;{print $1&quot;|&quot; $2 &quot;|&quot; $3}&#39;</span> Eng_newstrain.txt &gt; Eng_newstrain_id.txt<span class="p">;</span>
-<span class="o">!</span>rm Eng_newstrain.txt
-</pre></div>
-
-     </div>
-</div>
-</div>
-</div>
-
-</div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>The alignment is split into two files by lineage:</p>
-
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>seqkit grep -n -f Eng_newstrain_id.txt Eng_alignment_cleaned.fasta &gt; Eng_newstrain.fasta<span class="p">;</span>
-<span class="o">!</span>seqkit grep -n -v -f Eng_newstrain_id.txt Eng_alignment_cleaned.fasta &gt; Eng_oldstrain.fasta
-</pre></div>
-
-     </div>
-</div>
-</div>
-</div>
-
-</div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>To avoid having identical sequences in the sample, all sequences which are identical are removed:</p>
-
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>seqkit rmdup -DEng_olddeleted.txt -s Eng_oldstrain.fasta &gt; Eng_oldstrain_nondup.fasta<span class="p">;</span>
-<span class="o">!</span>seqkit rmdup -DEng_newdeleted.txt -s Eng_newstrain.fasta &gt; Eng_newstrain_nondup.fasta<span class="p">;</span>
-<span class="o">!</span>rm Eng_newstrain.fasta<span class="p">;</span>
-<span class="o">!</span>rm Eng_oldstrain.fasta
-</pre></div>
-
-     </div>
-</div>
-</div>
-</div>
-
-<div class="jp-Cell-outputWrapper">
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-
-<div class="jp-OutputArea-child">
-
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>[INFO] 465 duplicated records removed
-[INFO] 468 duplicated records removed
-</pre>
-</div>
-</div>
-
-</div>
-
-</div>
-
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>seqkit stats Eng_newstrain_nondup.fasta<span class="p">;</span>
-<span class="o">!</span>seqkit stats Eng_oldstrain_nondup.fasta
-</pre></div>
-
-     </div>
-</div>
-</div>
-</div>
-
-<div class="jp-Cell-outputWrapper">
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-
-<div class="jp-OutputArea-child">
-
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>file                        format  type  num_seqs     sum_len  min_len  avg_len  max_len
-Eng_newstrain_nondup.fasta  FASTA   DNA        934  27,929,402   29,903   29,903   29,903
-file                        format  type  num_seqs     sum_len  min_len  avg_len  max_len
-Eng_oldstrain_nondup.fasta  FASTA   DNA      2,651  79,272,853   29,903   29,903   29,903
-</pre>
-</div>
-</div>
-
-</div>
-
-</div>
-
-</div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Sample-generation">Sample generation<a class="anchor-link" href="#Sample-generation">&#182;</a></h3>
-</div>
-</div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>40 sequences from each dataset are selected using SeqKit:</p>
-
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[7]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>cat ref_seq.fasta &gt; Eng_sample.fasta<span class="p">;</span>
-<span class="o">!</span>seqkit sample -s <span class="m">62143677</span> -p <span class="m">0</span>.1 Eng_oldstrain_nondup.fasta <span class="p">|</span> seqkit shuffle -s <span class="m">73487948</span> <span class="p">|</span> seqkit head -n <span class="m">40</span> &gt;&gt; Eng_sample.fasta<span class="p">;</span>
-<span class="o">!</span>seqkit sample -s <span class="m">92873461</span> -p <span class="m">0</span>.1 Eng_newstrain_nondup.fasta <span class="p">|</span> seqkit shuffle -s <span class="m">48182303</span> <span class="p">|</span> seqkit head -n <span class="m">40</span> &gt;&gt; Eng_sample.fasta<span class="p">;</span>
-</pre></div>
-
-     </div>
-</div>
-</div>
-</div>
-
-<div class="jp-Cell-outputWrapper">
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-
-<div class="jp-OutputArea-child">
-
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>[INFO] read sequences ...
-[INFO] sample by proportion
-[INFO] 247 sequences outputted
-[INFO] 247 sequences loaded
-[INFO] shuffle ...
-[INFO] output ...
-[INFO] read sequences ...
-[INFO] sample by proportion
-[INFO] 83 sequences outputted
-[INFO] 83 sequences loaded
-[INFO] shuffle ...
-[INFO] output ...
-</pre>
-</div>
-</div>
-
-</div>
-
-</div>
-
-</div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>The IDs of sequences in the sample are found in sample_ids.txt:</p>
-
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[8]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>grep <span class="s2">&quot;&gt;&quot;</span> Eng_sample.fasta <span class="p">|</span> awk -F<span class="s2">&quot;|&quot;</span> <span class="s1">&#39;{ print $2 }&#39;</span> &gt; Eng_sample_id.txt<span class="p">;</span>
-<span class="o">!</span>head Eng_sample_id.txt
-</pre></div>
-
-     </div>
-</div>
-</div>
-</div>
-
-<div class="jp-Cell-outputWrapper">
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-
-<div class="jp-OutputArea-child">
-
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>
-EPI_ISL_662468
-EPI_ISL_664402
-EPI_ISL_702752
-EPI_ISL_650455
-EPI_ISL_667977
-EPI_ISL_642566
-EPI_ISL_661404
-EPI_ISL_679726
-EPI_ISL_654967
-</pre>
-</div>
-</div>
-
-</div>
-
-</div>
-
-</div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>To check the size of the resulting sample:</p>
-
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[9]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>seqkit stats Eng_sample.fasta
-</pre></div>
-
-     </div>
-</div>
-</div>
-</div>
-
-<div class="jp-Cell-outputWrapper">
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-
-<div class="jp-OutputArea-child">
-
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>file              format  type  num_seqs    sum_len  min_len  avg_len  max_len
-Eng_sample.fasta  FASTA   DNA         81  2,422,143   29,903   29,903   29,903
-</pre>
-</div>
-</div>
-
-</div>
-
-</div>
-
-</div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>This consists of 80 sampled sequences plus the reference.</p>
-<h3 id="Masking-problematic-sites">Masking problematic sites<a class="anchor-link" href="#Masking-problematic-sites">&#182;</a></h3><p>The R script <code>Eng_find_multiallelic.R</code> is used to extract positions of the SNPs in the data, identify and mask multi-allelic sites, and mask all sites flagged as problematic by <a href="https://virological.org/t/issues-with-sars-cov-2-sequencing-data/473">De Maio et al (2020)</a> (updated to 13 November 2020). The list of problematic sites is downloaded from <a href="https://github.com/W-L/ProblematicSites_SARS-CoV2">here</a>.</p>
-
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[10]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>awk <span class="s1">&#39;/^&gt;/ { print (NR==1 ? &quot;&quot; : RS) $0; next } { printf &quot;%s&quot;, $0 } END { printf RS }&#39;</span> Eng_sample.fasta &gt; Eng_sample_temp.fasta<span class="p">;</span>
-<span class="o">!</span>sed <span class="s1">&#39;s/./&amp; /g&#39;</span> &lt; Eng_sample_temp.fasta &gt; Eng_sample_test.fasta<span class="p">;</span>
-<span class="o">!</span>rm Eng_sample_temp.fasta<span class="p">;</span>
-<span class="o">!</span>Rscript Eng_find_multiallelic.R Eng_sample_test.fasta Eng_sample_masked.fasta Eng_sample_positions.fasta
-</pre></div>
-
-     </div>
-</div>
-</div>
-</div>
-
-<div class="jp-Cell-outputWrapper">
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-
-<div class="jp-OutputArea-child">
-
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>[1] SNP sites: 363
-[1] Plus masked: 7
-[1] Plus multi-allelic: 3
-[1] SNP sites:
-  [1]   145   204   213   219   241   337   406   505   509   583   596   832
- [13]   872   913   936  1126  1149  1163  1191  1210  1288  1344  1457  1471
- [25]  1537  1627  1681  1820  1883  1886  1912  1919  1942  2110  2232  2342
- [37]  2380  2407  2445  2453  2494  2571  2716  2722  2880  3004  3037  3117
- [49]  3176  3251  3256  3259  3261  3267  3330  3331  3373  3587  3602  3638
- [61]  3686  3695  3713  3827  3873  3880  3896  3959  4002  4009  4021  4255
- [73]  4291  4303  4345  4573  4763  4890  4964  5100  5128  5139  5250  5278
- [85]  5388  5392  5575  5622  5672  5986  6160  6190  6317  6633  6730  6781
- [97]  6790  6868  6883  6926  6936  6954  7589  7732  7783  7919  8072  8084
-[109]  8118  8353  8476  8565  8603  8683  8917  9051  9072  9130  9207  9289
-[121]  9433  9484  9611  9623  9802  9836  9857 10027 10097 10189 10196 10265
-[133] 10369 10448 10789 10969 10992 10994 11230 11401 11447 11518 11591 12053
-[145] 12162 12180 12241 12525 12778 12784 12809 12880 13536 13620 13667 14107
-[157] 14120 14173 14202 14407 14408 14500 14616 14620 14676 15101 15243 15279
-[169] 15380 15406 15652 15957 15984 16111 16176 16260 16293 16323 16398 17028
-[181] 17063 17122 17140 17295 17410 17615 17639 17715 17734 17735 17985 18060
-[193] 18168 18348 18364 18397 18526 19017 19018 19079 19162 19269 19542 19650
-[205] 19718 19839 19854 19862 19960 20251 20603 20742 20801 20946 21123 21137
-[217] 21204 21255 21637 21648 21767 21800 21850 21952 21985 21998 22000 22029
-[229] 22075 22131 22224 22227 22326 22328 22344 22388 22432 22468 22604 22624
-[241] 22660 23063 23271 23282 23323 23403 23462 23525 23604 23621 23709 23731
-[253] 23758 23809 23944 24088 24130 24131 24138 24175 24378 24506 24620 24774
-[265] 24781 24851 24914 25150 25177 25311 25340 25437 25521 25552 25593 25595
-[277] 25617 25660 25667 25690 25703 25916 25984 26049 26060 26069 26087 26180
-[289] 26189 26211 26305 26353 26428 26456 26464 26526 26730 26834 26846 27008
-[301] 27046 27242 27281 27319 27389 27455 27513 27579 27599 27708 27728 27782
-[313] 27798 27841 27865 27866 27881 27945 27967 27972 27999 28048 28078 28087
-[325] 28093 28095 28111 28169 28221 28280 28281 28282 28291 28310 28453 28487
-[337] 28684 28706 28868 28884 28889 28890 28899 28905 28922 28977 29149 29227
-[349] 29272 29274 29405 29416 29466 29518 29521 29555 29645 29717 29734 29736
-[361] 29750 29771 29785
-[1] Multi-allelic sites:
-[1] 12067 21724 22992
-[1] Masked sites:
-  [1]     1     2     3     4     5     6     7     8     9    10    11    12
- [13]    13    14    15    16    17    18    19    20    21    22    23    24
- [25]    25    26    27    28    29    30    31    32    33    34    35    36
- [37]    37    38    39    40    41    42    43    44    45    46    47    48
- [49]    49    50    51    52    53    54    55    76    78   150   153   285
- [61]   538   553   558   635   660   759   856  1001  1707  1814  1895  1947
- [73]  2087  2091  2094  2101  2198  2381  2604  3073  3145  3564  3639  3778
- [85]  4050  4221  4463  5011  5257  5393  5498  5657  5736  5743  5744  5765
- [97]  5766  6167  6255  6309  6310  6312  6483  6866  6869  6874  6877  6971
-[109]  6975  6977  7017  7038  7090  7214  7246  7305  7396  8022  8026  8328
-[121]  8459  8696  8790  8827  8828  8886  8887  9039  9471 10046 10122 10129
-[133] 10157 10239 10266 10554 10986 11048 11074 11083 11535 12506 12685 12751
-[145] 13402 13408 13476 13512 13513 13514 13571 13599 13650 13686 13687 13693
-[157] 14197 14222 14223 14225 14277 14548 15435 15769 15771 15922 16188 16210
-[169] 16290 16537 16787 16887 17096 17178 17179 17182 17479 17754 17848 18445
-[181] 18465 18505 18506 18690 19298 19299 19338 19339 19344 19369 19406 19482
-[193] 19484 19548 19732 20056 20123 20126 20254 20465 21149 21151 21209 21212
-[205] 21302 21304 21305 21379 21550 21551 21575 21609 21658 22329 22335 22389
-[217] 22393 22416 22420 22488 22500 22506 22515 22516 22521 22661 22802 23116
-[229] 23122 23144 23162 23291 23292 23302 23519 23745 23766 23855 24389 24390
-[241] 24497 24622 24673 24933 24942 25202 25381 25382 25798 25961 26549 26700
-[253] 26709 27534 27658 27660 27720 27760 27761 27784 27792 28004 28005 28006
-[265] 28008 28184 28253 28517 28559 28676 28780 28881 28882 28883 28985 29037
-[277] 29039 29378 29425 29427 29428 29553 29594 29737 29786 29804 29805 29806
-[289] 29807 29808 29809 29810 29811 29812 29813 29814 29815 29816 29817 29818
-[301] 29819 29820 29821 29822 29823 29824 29825 29826 29827 29828 29829 29830
-[313] 29831 29832 29833 29834 29835 29836 29837 29838 29839 29840 29841 29842
-[325] 29843 29844 29845 29846 29847 29848 29849 29850 29851 29852 29853 29854
-[337] 29855 29856 29857 29858 29859 29860 29861 29862 29863 29864 29865 29866
-[349] 29867 29868 29869 29870 29871 29872 29873 29874 29875 29876 29877 29878
-[361] 29879 29880 29881 29882 29883 29884 29885 29886 29887 29888 29889 29890
-[373] 29891 29892 29893 29894 29895 29896 29897 29898 29899 29900 29901 29902
-[385] 29903
-</pre>
-</div>
-</div>
-
-</div>
-
-</div>
-
-</div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>There are 373 variable sites, of which 3 are multi-allelic, and a further 7 are masked as problematic. The output file <code>Eng_sample_masked.fasta</code> contains the masked multiple alignment; the file <code>Eng_positions.txt</code> contains a list of SNP positions.</p>
-
-</div>
-</div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Labelling">Labelling<a class="anchor-link" href="#Labelling">&#182;</a></h3><p>The sequences are given sequential labels (to make the ARGs easier to view):</p>
-
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[11]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>seqkit head -n <span class="m">1</span> Eng_sample_masked.fasta &gt; Eng_sample_masked_id.fasta<span class="p">;</span>
-<span class="o">!</span>seqkit range -r <span class="m">2</span>:41 Eng_sample_masked.fasta &gt; f1.f<span class="p">;</span>
-<span class="o">!</span>seqkit range -r <span class="m">42</span>:81 Eng_sample_masked.fasta &gt; f2.f<span class="p">;</span>
-<span class="o">!</span>awk <span class="s1">&#39;/^&gt;/{print &quot;&gt;O&quot; ++i; next}{print}&#39;</span> &lt; f1.f &gt;&gt; Eng_sample_masked_id.fasta<span class="p">;</span>
-<span class="o">!</span>awk <span class="s1">&#39;/^&gt;/{print &quot;&gt;N&quot; ++i; next}{print}&#39;</span> &lt; f2.f &gt;&gt; Eng_sample_masked_id.fasta<span class="p">;</span>
-<span class="o">!</span>rm f1.f<span class="p">;</span>
-<span class="o">!</span>rm f2.f
-</pre></div>
-
-     </div>
-</div>
-</div>
-</div>
-
-</div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h1 id="Data-processing:-South-Africa">Data processing: South Africa<a class="anchor-link" href="#Data-processing:-South-Africa">&#182;</a></h1>
+<h1 id="Data-processing">Data processing<a class="anchor-link" href="#Data-processing">&#182;</a></h1>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
@@ -14803,14 +14289,13 @@ Eng_sample.fasta  FASTA   DNA         81  2,422,143   29,903   29,903   29,903
 <ul>
 <li><code>SA_newstrain_sequencing_info.tsv</code></li>
 </ul>
-<p>to enable filtering by strain.</p>
-<p>The data is not shared here as per GISAID's terms of use, but the GISAID accession IDs are provided in the file SA_id.txt, which can be used to recreate the dataset used in our analysis:</p>
+<p>The data is not shared here as per GISAID's terms of use, but the GISAID accession IDs are provided in the file SA_id.txt, which can be used to recreate the dataset used in our analysis.</p>
 
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[12]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[1]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>grep <span class="s2">&quot;&gt;&quot;</span> SA_data.fasta <span class="p">|</span> awk -F<span class="s2">&quot;|&quot;</span> <span class="s1">&#39;{ print $2 }&#39;</span> &gt; SA_id.txt<span class="p">;</span>
@@ -14855,14 +14340,36 @@ EPI_ISL_660228
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Alignment">Alignment<a class="anchor-link" href="#Alignment">&#182;</a></h3><p>The sequences in each dataset were aligned using MAFFT as above and all symbols other than 'A, C, T, G' were replaced with 'N', as above. The resulting multiple alignment was stored in <code>SA_alignment_cleaned.fasta</code>.</p>
+<h3 id="Alignment">Alignment<a class="anchor-link" href="#Alignment">&#182;</a></h3><p>The sequences in each dataset were aligned using MAFFT to the reference sequence in <code>ref_seq.fasta</code> (GISAID accession EPI_ISL_402125, GenBank ID MN908947.3):</p>
+<div class="highlight"><pre><span></span>mafft --auto --thread -1 --keeplength --quiet --mapout --preservecase --addfragments SA_data.fasta ref_seq.fasta &gt; SA_alignment.fasta
+</pre></div>
+<p>All symbols other than 'A, C, T, G' are replaced with 'N':</p>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>sed <span class="s1">&#39;/^&gt;/! s/[^actgACTG]/N/g&#39;</span> SA_alignment.fasta &gt; SA_alignment_cleaned.fasta
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p>Sequences labelled as having long stretches of ambiguous nucleotides were removed:</p>
 
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[13]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>grep <span class="s2">&quot;Stretches&quot;</span> SA_sequencing_info.tsv <span class="p">|</span> awk <span class="s1">&#39;{print $1 &quot; &quot; $2 &quot;|&quot; $3 &quot;|&quot; $4}&#39;</span> &gt; Ns_id.txt<span class="p">;</span>
@@ -14885,7 +14392,7 @@ EPI_ISL_660228
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[14]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>seqkit stats SA_alignment_good.fasta
@@ -14932,7 +14439,7 @@ SA_alignment_good.fasta  FASTA   DNA        279  8,342,937   29,903   29,903   2
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[15]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>awk <span class="s1">&#39;{print $1 &quot; &quot; $2 &quot;|&quot; $3 &quot;|&quot; $4}&#39;</span> SA_newstrain_sequencing_info.tsv <span class="p">|</span> grep <span class="s2">&quot;hCoV&quot;</span> &gt; SA_newstrain_id.txt<span class="p">;</span>
@@ -14947,7 +14454,7 @@ SA_alignment_good.fasta  FASTA   DNA        279  8,342,937   29,903   29,903   2
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[16]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>seqkit grep -n -f SA_newstrain_id.txt SA_alignment_good.fasta &gt; SA_newstrain.fasta<span class="p">;</span>
@@ -14959,10 +14466,16 @@ SA_alignment_good.fasta  FASTA   DNA        279  8,342,937   29,903   29,903   2
 </div>
 </div>
 
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>Checking to see if there are any exact duplicates in the data:</p>
+
+</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[17]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>seqkit rmdup -DSA_olddeleted.txt -s SA_oldstrain.fasta &gt; SA_oldstrain_nondup.fasta<span class="p">;</span>
@@ -15001,7 +14514,7 @@ SA_alignment_good.fasta  FASTA   DNA        279  8,342,937   29,903   29,903   2
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[18]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[8]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>seqkit stats SA_oldstrain_nondup.fasta<span class="p">;</span>
@@ -15040,13 +14553,13 @@ SA_newstrain_nondup.fasta  FASTA   DNA        177  5,292,831   29,903   29,903  
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Sample-generation">Sample generation<a class="anchor-link" href="#Sample-generation">&#182;</a></h3><p>The reference sequence is deleted from <code>SA_oldstrain_nondup.fasta</code> prior to running the following:</p>
+<h3 id="Sample-generation">Sample generation<a class="anchor-link" href="#Sample-generation">&#182;</a></h3><p>The reference sequence was deleted from <code>SA_oldstrain_nondup.fasta</code> prior to running the following:</p>
 
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[19]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[9]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>cat ref_seq.fasta &gt; SA_sample.fasta<span class="p">;</span>
@@ -15077,8 +14590,8 @@ SA_newstrain_nondup.fasta  FASTA   DNA        177  5,292,831   29,903   29,903  
 [INFO] 62 sequences loaded
 [INFO] shuffle ...
 [INFO] output ...
-[INFO] sample by proportion
 [INFO] read sequences ...
+[INFO] sample by proportion
 [INFO] 113 sequences outputted
 [INFO] 113 sequences loaded
 [INFO] shuffle ...
@@ -15100,11 +14613,11 @@ SA_newstrain_nondup.fasta  FASTA   DNA        177  5,292,831   29,903   29,903  
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[20]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[10]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>grep <span class="s2">&quot;&gt;&quot;</span> SA_sample.fasta <span class="p">|</span> awk -F<span class="s2">&quot;|&quot;</span> <span class="s1">&#39;{ print $2 }&#39;</span> &gt; SA_sample_id.txt<span class="p">;</span>
-<span class="o">!</span>head SA_sample_id.txt
+<span class="o">!</span>cat SA_sample_id.txt
 </pre></div>
 
      </div>
@@ -15134,6 +14647,47 @@ EPI_ISL_736985
 EPI_ISL_736926
 EPI_ISL_696462
 EPI_ISL_660655
+EPI_ISL_660625
+EPI_ISL_660231
+EPI_ISL_678608
+EPI_ISL_660163
+EPI_ISL_660232
+EPI_ISL_700488
+EPI_ISL_660652
+EPI_ISL_660622
+EPI_ISL_660651
+EPI_ISL_678612
+EPI_ISL_696509
+EPI_ISL_678595
+EPI_ISL_660222
+EPI_ISL_696468
+EPI_ISL_660230
+EPI_ISL_660626
+EPI_ISL_736958
+EPI_ISL_696481
+EPI_ISL_660637
+EPI_ISL_678632
+EPI_ISL_736932
+EPI_ISL_678641
+EPI_ISL_700422
+EPI_ISL_696503
+EPI_ISL_700470
+EPI_ISL_736983
+EPI_ISL_736936
+EPI_ISL_700487
+EPI_ISL_736935
+EPI_ISL_700443
+EPI_ISL_736939
+EPI_ISL_700554
+EPI_ISL_696505
+EPI_ISL_696518
+EPI_ISL_700589
+EPI_ISL_736959
+EPI_ISL_696453
+EPI_ISL_696521
+EPI_ISL_736964
+EPI_ISL_736928
+EPI_ISL_678629
 </pre>
 </div>
 </div>
@@ -15145,24 +14699,30 @@ EPI_ISL_660655
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>These are the accession numbers given in Table S1.</p>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <h3 id="Masking-problematic-sites">Masking problematic sites<a class="anchor-link" href="#Masking-problematic-sites">&#182;</a></h3>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>This is done using the same method as for the England dataset, with the script modified to mask additional sites as described in Sections 2.2 and 5.1.</p>
+<p>This is done using the provided script (for other datasets, the list of sites to mask was amended as detailed in the manuscript).</p>
 
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[21]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[12]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>awk <span class="s1">&#39;/^&gt;/ { print (NR==1 ? &quot;&quot; : RS) $0; next } { printf &quot;%s&quot;, $0 } END { printf RS }&#39;</span> SA_sample.fasta &gt; SA_sample_temp.fasta<span class="p">;</span>
 <span class="o">!</span>sed <span class="s1">&#39;s/./&amp; /g&#39;</span> &lt; SA_sample_temp.fasta &gt; SA_sample_test.fasta<span class="p">;</span>
 <span class="o">!</span>rm SA_sample_temp.fasta<span class="p">;</span>
-<span class="o">!</span>Rscript SA_find_multiallelic.R SA_sample_test.fasta SA_sample_masked.fasta SA_sample_positions.fasta
+<span class="o">!</span>Rscript SA_find_multiallelic.R SA_sample_test.fasta SA_sample_masked.fasta SA_sample_positions.txt
 </pre></div>
 
      </div>
@@ -15182,79 +14742,160 @@ EPI_ISL_660655
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>[1] SNP sites: 228
-[1] Plus masked: 7
-[1] Plus multi-allelic: 1
+<pre>[1] SNP sites: 206
+[1] Plus masked: 29
+[1] Plus multi-allelic: 0
 [1] SNP sites:
   [1]   117   168   174   203   210   241   355   362   376   550   598  1042
- [13]  1059  1072  1172  1205  1248  1263  1269  1337  1427  1593  1912  1968
- [25]  2692  2780  2781  2782  2937  3037  3117  3182  3340  3472  3505  3904
- [37]  3923  4078  4093  4510  4615  4668  5230  5425  5495  5503  5794  5857
- [49]  5950  6525  6618  6624  6651  6701  6726  6762  7064  7113  7279  7390
- [61]  7420  7425  7844  8068  8655  8658  8660  8964  9073  9430 10138 10156
- [73] 10279 10323 10540 10623 10681 10912 11195 11230 11401 11447 11534 11629
- [85] 11653 11854 11875 11886 11896 12071 12085 12253 12503 12769 13122 13812
- [97] 14408 14583 14763 14925 14928 14937 15003 15222 15952 15970 16490 16804
-[109] 17193 17334 17533 17679 17876 17898 17999 18028 18085 18175 18395 18495
-[121] 18555 18788 18910 19062 19283 19542 19602 19656 20233 20268 20387 20718
-[133] 21024 21099 21614 21762 21801 21979 21997 22022 22205 22206 22214 22278
-[145] 22299 22675 22708 22813 22992 23012 23031 23063 23403 23407 23534 23664
-[157] 23710 23836 23854 24023 24062 24133 24337 24398 24781 25139 25145 25171
-[169] 25186 25241 25273 25303 25427 25511 25521 25561 25563 25566 25613 25630
-[181] 25635 25672 25705 25770 25814 25855 25904 25970 25977 26174 26262 26456
-[193] 26501 26563 26586 26645 26681 26690 26975 27008 27131 27152 27384 27406
-[205] 27504 27679 27945 28077 28086 28112 28254 28817 28854 28887 28895 28899
-[217] 28905 29081 29085 29254 29366 29421 29440 29541 29555 29560 29614 29721
+ [13]  1072  1172  1205  1248  1263  1269  1337  1427  1593  1968  2692  2780
+ [25]  2781  2782  2937  3117  3182  3340  3472  3505  3904  3923  4078  4093
+ [37]  4510  4615  4668  5230  5425  5495  5503  5794  5857  5950  6525  6618
+ [49]  6624  6651  6701  6726  6762  7064  7113  7279  7390  7420  7425  7844
+ [61]  8068  8655  8660  8964  9073  9430 10138 10156 10279 10540 10623 10681
+ [73] 10912 11230 11401 11447 11534 11629 11653 11854 11875 11886 11896 12071
+ [85] 12085 12253 12503 12769 13122 13812 14583 14763 14928 14937 15003 15222
+ [97] 15952 15970 16490 16804 17193 17334 17533 17679 17876 17898 17999 18028
+[109] 18085 18175 18395 18495 18555 18910 19062 19283 19542 19602 19656 20233
+[121] 20387 20718 21024 21099 21614 21762 21801 21979 21997 22022 22205 22206
+[133] 22214 22813 22992 23012 23031 23063 23407 23534 23664 23710 23836 23854
+[145] 24023 24062 24133 24337 24398 24781 25139 25145 25171 25186 25241 25273
+[157] 25303 25427 25511 25521 25561 25566 25613 25630 25635 25672 25705 25770
+[169] 25814 25855 25904 25970 25977 26174 26262 26456 26501 26563 26586 26645
+[181] 26681 26690 26975 27008 27131 27152 27406 27504 27945 28086 28112 28817
+[193] 28895 28899 28905 29081 29085 29254 29366 29421 29440 29541 29555 29560
+[205] 29614 29721
 [1] Multi-allelic sites:
-[1] 29742
+NULL
 [1] Masked sites:
-  [1]     1     2     3     4     5     6     7     8     9    10    11    12
- [13]    13    14    15    16    17    18    19    20    21    22    23    24
- [25]    25    26    27    28    29    30    31    32    33    34    35    36
- [37]    37    38    39    40    41    42    43    44    45    46    47    48
- [49]    49    50    51    52    53    54    55    76    78   150   153   285
- [61]   538   553   558   635   660   759   856  1001  1707  1814  1895  1947
- [73]  2087  2091  2094  2101  2198  2381  2604  3073  3145  3564  3639  3778
- [85]  4050  4221  4463  5011  5257  5393  5498  5657  5736  5743  5744  5765
- [97]  5766  6167  6255  6309  6310  6312  6483  6866  6869  6874  6877  6971
-[109]  6975  6977  7017  7038  7090  7214  7246  7305  7396  8022  8026  8328
-[121]  8459  8696  8790  8827  8828  8886  8887  9039  9471 10046 10122 10129
-[133] 10157 10239 10266 10554 10986 11048 11074 11083 11535 12506 12685 12751
-[145] 13402 13408 13476 13512 13513 13514 13571 13599 13650 13686 13687 13693
-[157] 14197 14222 14223 14225 14277 14548 15435 15769 15771 15922 16188 16210
-[169] 16290 16537 16787 16887 17096 17178 17179 17182 17479 17754 17848 18445
-[181] 18465 18505 18506 18690 19298 19299 19338 19339 19344 19369 19406 19482
-[193] 19484 19548 19732 20056 20123 20126 20254 20465 21149 21151 21209 21212
-[205] 21302 21304 21305 21379 21550 21551 21575 21609 21658 22329 22335 22389
-[217] 22393 22416 22420 22488 22500 22506 22515 22516 22521 22661 22802 23116
-[229] 23122 23144 23162 23291 23292 23302 23519 23745 23766 23855 24389 24390
-[241] 24497 24622 24673 24933 24942 25202 25381 25382 25798 25961 26549 26700
-[253] 26709 27534 27658 27660 27720 27760 27761 27784 27792 28004 28005 28006
-[265] 28008 28184 28253 28517 28559 28676 28780 28881 28882 28883 28985 29037
-[277] 29039 29378 29425 29427 29428 29553 29594 29737 29786 29804 29805 29806
-[289] 29807 29808 29809 29810 29811 29812 29813 29814 29815 29816 29817 29818
-[301] 29819 29820 29821 29822 29823 29824 29825 29826 29827 29828 29829 29830
-[313] 29831 29832 29833 29834 29835 29836 29837 29838 29839 29840 29841 29842
-[325] 29843 29844 29845 29846 29847 29848 29849 29850 29851 29852 29853 29854
-[337] 29855 29856 29857 29858 29859 29860 29861 29862 29863 29864 29865 29866
-[349] 29867 29868 29869 29870 29871 29872 29873 29874 29875 29876 29877 29878
-[361] 29879 29880 29881 29882 29883 29884 29885 29886 29887 29888 29889 29890
-[373] 29891 29892 29893 29894 29895 29896 29897 29898 29899 29900 29901 29902
-[385] 29903 22339 22340 22341 22342 22343 22344 22345 22346 22347 22348 22349
-[397] 22350 22351 22352 22353 22354 22355 22356 22357 22358 22359 22360 22361
-[409] 22362 22363 22364 22365 22366 22367 22368 22369 22370 22371 22372 22373
-[421] 22374 22375 22376 22377 22378 22379 22380 22381 22382 22383 22384 22385
-[433] 22386 22387 22388 22390 22391 22392 22394 22395 22396 22397 22398 22399
-[445] 22400 22401 22402 22403 22404 22405 22406 22407 22408 22409 22410 22411
-[457] 22412 22413 22414 22415 22417 22418 22419 22421 22422 22423 22424 22425
-[469] 22426 22427 22428 22429 22430 22431 22432 22433 22434 22435 22436 22437
-[481] 22438 22439 22440 22441 22442 22443 22444 22445 22446 22447 22448 22449
-[493] 22450 22451 22452 22453 22454 22455 22456 22457 22458 22459 22460 22461
-[505] 22462 22463 22464 22465 22466 22467 22468 22469 22470 22471 22472 22473
-[517] 22474 22475 22476 22477 22478 22479 22480 22481 22482 22483 22484 22485
-[529] 22486 22487 22489 22490 22491 22492 22493 22494 22495 22496 22497 22498
-[541] 22499 22501 22502 22503 22504 22505 22507 22508 22509 22510 22511 22512
-[553] 22513 22514 22517 22518 22519 22520 22522 22523 22287
+   [1]     1     2     3     4     5     6     7     8     9    10    11    12
+  [13]    13    14    15    16    17    18    19    20    21    22    23    24
+  [25]    25    26    27    28    29    30    31    32    33    34    35    36
+  [37]    37    38    39    40    41    42    43    44    45    46    47    48
+  [49]    49    50    51    52    53    54    55    76    78   150   153   285
+  [61]   313   320   379   490   538   541   553   558   635   660   663   759
+  [73]   833   856   884  1001  1059  1076  1406  1457  1515  1570  1594  1707
+  [85]  1814  1820  1895  1912  1947  2087  2091  2094  2101  2113  2198  2247
+  [97]  2381  2455  2558  2604  3037  3050  3073  3096  3145  3177  3191  3253
+ [109]  3480  3504  3564  3639  3778  3787  3877  4050  4084  4113  4221  4255
+ [121]  4320  4463  4505  4692  4809  4854  4991  5011  5130  5196  5233  5257
+ [133]  5322  5375  5393  5498  5657  5736  5743  5744  5765  5766  5784  5847
+ [145]  5880  6040  6167  6255  6309  6310  6312  6483  6573  6723  6804  6866
+ [157]  6869  6874  6877  6971  6975  6977  6990  7011  7017  7038  7090  7118
+ [169]  7214  7246  7305  7396  7438  7479  7765  7805  8022  8026  8078  8293
+ [181]  8328  8459  8550  8658  8678  8688  8696  8767  8782  8790  8827  8828
+ [193]  8886  8887  8917  8943  8999  9039  9141  9223  9249  9276  9471  9477
+ [205]  9479 10046 10097 10122 10129 10157 10239 10265 10266 10319 10323 10450
+ [217] 10507 10554 10716 10764 10789 10851 10986 11048 11074 11083 11195 11320
+ [229] 11392 11417 11535 11704 11801 11916 12041 12164 12413 12491 12506 12685
+ [241] 12698 12751 12781 12880 13117 13161 13193 13239 13402 13408 13476 13512
+ [253] 13513 13514 13571 13599 13650 13686 13687 13693 13730 13929 13947 14197
+ [265] 14222 14223 14225 14277 14408 14488 14536 14548 14553 14724 14741 14747
+ [277] 14786 14805 14851 14852 14912 14925 15075 15103 15199 15230 15277 15324
+ [289] 15435 15513 15720 15760 15769 15771 15922 15927 15960 16130 16132 16188
+ [301] 16210 16260 16289 16290 16381 16537 16738 16762 16787 16887 16988 17096
+ [313] 17104 17178 17179 17182 17247 17373 17410 17479 17567 17639 17668 17675
+ [325] 17690 17716 17747 17754 17799 17848 17858 17944 18060 18297 18445 18465
+ [337] 18505 18506 18652 18656 18690 18713 18716 18756 18788 18877 18928 18998
+ [349] 19170 19250 19286 19298 19299 19338 19339 19344 19369 19406 19482 19484
+ [361] 19548 19684 19732 20031 20056 20123 20126 20128 20148 20254 20268 20275
+ [373] 20465 20755 20857 20931 21137 21149 21151 21204 21209 21212 21281 21302
+ [385] 21304 21305 21379 21550 21551 21575 21609 21648 21658 21707 21968 22266
+ [397] 22267 22268 22269 22270 22271 22272 22273 22274 22275 22276 22277 22278
+ [409] 22279 22280 22281 22282 22283 22284 22285 22286 22287 22288 22289 22290
+ [421] 22291 22292 22293 22294 22295 22296 22297 22298 22299 22300 22301 22302
+ [433] 22303 22304 22305 22306 22307 22308 22309 22310 22311 22312 22313 22314
+ [445] 22315 22316 22317 22318 22319 22320 22321 22322 22323 22324 22325 22326
+ [457] 22327 22328 22329 22330 22331 22332 22333 22334 22335 22336 22337 22338
+ [469] 22339 22340 22341 22342 22343 22344 22345 22346 22347 22348 22349 22350
+ [481] 22351 22352 22353 22354 22355 22356 22357 22358 22359 22360 22361 22362
+ [493] 22363 22364 22365 22366 22367 22368 22369 22370 22371 22372 22373 22374
+ [505] 22375 22376 22377 22378 22379 22380 22381 22382 22383 22384 22385 22386
+ [517] 22387 22388 22389 22390 22391 22392 22393 22394 22395 22396 22397 22398
+ [529] 22399 22400 22401 22402 22403 22404 22405 22406 22407 22408 22409 22410
+ [541] 22411 22412 22413 22414 22415 22416 22417 22418 22419 22420 22421 22422
+ [553] 22423 22424 22425 22426 22427 22428 22429 22430 22431 22432 22433 22434
+ [565] 22435 22436 22437 22438 22439 22440 22441 22442 22443 22444 22445 22446
+ [577] 22447 22448 22449 22450 22451 22452 22453 22454 22455 22456 22457 22458
+ [589] 22459 22460 22461 22462 22463 22464 22465 22466 22467 22468 22469 22470
+ [601] 22471 22472 22473 22474 22475 22476 22477 22478 22479 22480 22481 22482
+ [613] 22483 22484 22485 22486 22487 22488 22489 22490 22491 22492 22493 22494
+ [625] 22495 22496 22497 22498 22499 22500 22501 22502 22503 22504 22505 22506
+ [637] 22507 22508 22509 22510 22511 22512 22513 22514 22515 22516 22517 22518
+ [649] 22519 22520 22521 22522 22523 22524 22525 22526 22527 22528 22529 22530
+ [661] 22531 22532 22533 22534 22535 22536 22537 22538 22539 22540 22541 22542
+ [673] 22543 22544 22545 22546 22547 22548 22549 22550 22551 22552 22553 22554
+ [685] 22555 22556 22557 22558 22559 22560 22561 22562 22563 22564 22565 22566
+ [697] 22567 22568 22569 22570 22571 22572 22573 22574 22575 22576 22577 22578
+ [709] 22579 22580 22581 22582 22583 22584 22585 22586 22587 22588 22589 22590
+ [721] 22591 22592 22593 22594 22595 22596 22597 22598 22599 22600 22601 22602
+ [733] 22603 22604 22605 22606 22607 22608 22609 22610 22611 22612 22613 22614
+ [745] 22615 22616 22617 22618 22619 22620 22621 22622 22623 22624 22625 22626
+ [757] 22627 22628 22629 22630 22631 22632 22633 22634 22635 22636 22637 22638
+ [769] 22639 22640 22641 22642 22643 22644 22645 22646 22647 22648 22649 22650
+ [781] 22651 22652 22653 22654 22655 22656 22657 22658 22659 22660 22661 22662
+ [793] 22663 22664 22665 22666 22667 22668 22669 22670 22671 22672 22673 22674
+ [805] 22675 22676 22677 22678 22679 22680 22681 22682 22683 22684 22685 22686
+ [817] 22687 22688 22689 22690 22691 22692 22693 22694 22695 22696 22697 22698
+ [829] 22699 22700 22701 22702 22703 22704 22705 22706 22707 22708 22709 22710
+ [841] 22711 22712 22713 22714 22715 22716 22717 22718 22719 22720 22721 22722
+ [853] 22723 22724 22725 22726 22727 22728 22729 22730 22731 22732 22733 22734
+ [865] 22735 22736 22737 22738 22739 22740 22741 22742 22743 22744 22745 22797
+ [877] 22802 22892 22904 22988 23010 23016 23086 23116 23122 23144 23162 23288
+ [889] 23291 23292 23302 23343 23403 23422 23519 23533 23587 23652 23707 23731
+ [901] 23738 23745 23763 23766 23775 23855 23929 24034 24054 24368 24389 24390
+ [913] 24497 24557 24622 24673 24694 24728 24862 24933 24942 25202 25381 25382
+ [925] 25433 25446 25494 25563 25572 25688 25798 25902 25908 25916 25947 25961
+ [937] 25979 26124 26144 26152 26211 26461 26530 26549 26625 26700 26709 26729
+ [949] 26730 26735 26936 27005 27033 27046 27299 27384 27525 27534 27635 27658
+ [961] 27660 27679 27720 27760 27761 27784 27792 27964 28004 28005 28006 28008
+ [973] 28077 28144 28184 28253 28254 28311 28344 28517 28559 28580 28657 28676
+ [985] 28688 28739 28780 28821 28826 28836 28851 28854 28857 28878 28881 28882
+ [997] 28883 28886 28887 28985 29037 29039 29049 29058 29095 29144 29253 29353
+[1009] 29378 29422 29425 29427 29428 29540 29553 29585 29594 29635 29686 29700
+[1021] 29734 29737 29742 29751 29783 29786 29804 29805 29806 29807 29808 29809
+[1033] 29810 29811 29812 29813 29814 29815 29816 29817 29818 29819 29820 29821
+[1045] 29822 29823 29824 29825 29826 29827 29828 29829 29830 29831 29832 29833
+[1057] 29834 29835 29836 29837 29838 29839 29840 29841 29842 29843 29844 29845
+[1069] 29846 29847 29848 29849 29850 29851 29852 29853 29854 29855 29856 29857
+[1081] 29858 29859 29860 29861 29862 29863 29864 29865 29866 29867 29868 29869
+[1093] 29870 29871 29872 29873 29874 29875 29876 29877 29878 29879 29880 29881
+[1105] 29882 29883 29884 29885 29886 29887 29888 29889 29890 29891 29892 29893
+[1117] 29894 29895 29896 29897 29898 29899 29900 29901 29902 29903
+</pre>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[13]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>cat SA_sample_positions.txt
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>117 168 174 203 210 241 355 362 376 550 598 1042 1072 1172 1205 1248 1263 1269 1337 1427 1593 1968 2692 2780 2781 2782 2937 3117 3182 3340 3472 3505 3904 3923 4078 4093 4510 4615 4668 5230 5425 5495 5503 5794 5857 5950 6525 6618 6624 6651 6701 6726 6762 7064 7113 7279 7390 7420 7425 7844 8068 8655 8660 8964 9073 9430 10138 10156 10279 10540 10623 10681 10912 11230 11401 11447 11534 11629 11653 11854 11875 11886 11896 12071 12085 12253 12503 12769 13122 13812 14583 14763 14928 14937 15003 15222 15952 15970 16490 16804 17193 17334 17533 17679 17876 17898 17999 18028 18085 18175 18395 18495 18555 18910 19062 19283 19542 19602 19656 20233 20387 20718 21024 21099 21614 21762 21801 21979 21997 22022 22205 22206 22214 22813 22992 23012 23031 23063 23407 23534 23664 23710 23836 23854 24023 24062 24133 24337 24398 24781 25139 25145 25171 25186 25241 25273 25303 25427 25511 25521 25561 25566 25613 25630 25635 25672 25705 25770 25814 25855 25904 25970 25977 26174 26262 26456 26501 26563 26586 26645 26681 26690 26975 27008 27131 27152 27406 27504 27945 28086 28112 28817 28895 28899 28905 29081 29085 29254 29366 29421 29440 29541 29555 29560 29614 29721
 </pre>
 </div>
 </div>
@@ -15272,7 +14913,7 @@ EPI_ISL_660655
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[22]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[14]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>seqkit head -n <span class="m">1</span> SA_sample_masked.fasta &gt; SA_sample_masked_id.fasta<span class="p">;</span>
@@ -15297,10 +14938,9 @@ EPI_ISL_660655
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>Detailed instructions for using KwARG and obtaining the desired outputs can be found <a href="https://github.com/a-ignatieva/kwarg">here</a>. KwARG is run on the masked England sample using the following command:</p>
+<p>Detailed instructions for using KwARG and obtaining the desired outputs can be found <a href="https://github.com/a-ignatieva/kwarg">here</a>. KwARG is run on the masked sample using the following command:</p>
 
-<pre><code>kwarg -T50,30 -Q500 -S-1,1.9,1.8,1.7,1.6,1.5,1.4,1.3,1.2,1.1,1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.01,1 -M-1,1.91,1.81,1.71,1.61,1.51,1.41,1.31,1.21,1.11,1.01,0.91,0.81,0.71,0.61,0.51,0.41,0.31,0.21,0.11,0.02,1.1 -R1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,-1 -C2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,-1 -k -n -f &lt; Eng_sample_masked_id.fasta &gt; Eng_kwarg_out.txt</code></pre>
-<p>and equivalently for the South Africa sample.</p>
+<pre><code>kwarg -T50,30 -Q500 -S-1,1.9,1.8,1.7,1.6,1.5,1.4,1.3,1.2,1.1,1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.01,1 -M-1,1.91,1.81,1.71,1.61,1.51,1.41,1.31,1.21,1.11,1.01,0.91,0.81,0.71,0.61,0.51,0.41,0.31,0.21,0.11,0.02,1.1 -R1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,-1 -C2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,-1 -k -n -f &lt; SA_sample_masked_id.fasta &gt; SA_kwarg_out.txt</code></pre>
 
 </div>
 </div>
